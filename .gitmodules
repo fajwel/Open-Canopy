@@ -1,0 +1,6 @@
+[submodule "src/utils/artools"]
+	path = src/utils/artools
+	url = https://gitlab.com/vsydorov_efeo/ml/artools
+[submodule "src/utils/vst"]
+	path = src/utils/vst
+	url = https://github.com/vsydorov/vst

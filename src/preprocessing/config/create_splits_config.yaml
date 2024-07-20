@@ -1,0 +1,12 @@
+image_dir: ./
+lidar_dir: ./
+save_dir: ./
+version: null # Specify a version name, if null the version name is the current date in format YYYYMMDDHHmm
+test_side_length: 7000
+buffer: 1000
+test_area: 20000
+val_proportion: 0.1 # proportion of train split (= not test) used for validation
+seed: 42 # seed used to generate random splits
+n_images: null # process only the first n_images (for test/debug)
+overwrite: false # overwrite existing files
+n_max_zeros: 100 # discard 1km2 tiles that have more than n_max_zeros (e.g., on edges of full image)

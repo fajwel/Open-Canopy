@@ -1,0 +1,7 @@
+dir_path: ./
+file_pattern: "*.tif" # pattern to match files to include in the vrt
+recursive: true # look for files in subdirectories matching file_pattern
+vrt_path: null # if null creates a vrt named full.vrt in dir_path
+check_invalid_files: false # first try to open all files and discard the ones that cannot be opened with rasterio
+crs: 2154 # final crs of the vrt
+noDataValue: null # value for nodata

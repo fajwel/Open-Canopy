@@ -1,0 +1,12 @@
+defaults:
+  - _seg_default
+
+net:
+  _target_: src.models.components.timmNet.timmNet
+  backbone: "twins_pcpvt_small.in1k"
+  pretrained: True
+  pretrained_path: datasets/init_models/pcpvt_small_in1k.bin
+  segmentation_head:
+    _partial_: True
+    _target_: src.models.components.utils.SimpleSegmentationHead
+    decoder_stride: 32

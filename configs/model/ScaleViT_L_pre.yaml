@@ -1,0 +1,20 @@
+defaults:
+  - _seg_default
+
+net:
+  _target_: src.models.components.ScaleMAE.ScaleVitNet
+  patch_size: 16
+  embed_dim: 1024
+  num_heads: 16
+  depth: 24
+  mlp_ratio: 4
+
+  #Final upsampling segmentation head
+  segmentation_head:
+    _partial_: True
+    _target_: src.models.components.utils.SimpleSegmentationHead
+    decoder_stride: 2
+
+  #Parameters for pretrained model
+  pretrained: True
+  pretrained_path: datasets/init_models/scalemae-vitlarge-800.pth

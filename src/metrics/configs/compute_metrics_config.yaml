@@ -1,0 +1,30 @@
+root_dir: ./ # root_dir for all paths except those in model
+geometries_path: geometries.geojson # path to a geodataframe with a column "split". Evaluation is performed on geometries from the given <split>.
+greco_path: null # if greco_name is not null, keep only geometries that are contained in greco_name (which can be accessed through the geometry with greco_name=<grec_name> at greco_path).
+greco_name: null # if greco_name is not null, keep only geometries that are contained in greco_name
+split: test
+bins: [0, 2, 5, 10, 15, 20, 30, 60]
+classes_to_keep: [5] # 3: Low vegetation (<=0.5m), 4: Medium vegetation (0.5-1.5m), 5: High vegetation (>=1.5m) (cf. cf. https://geoservices.ign.fr/sites/default/files/2023-10/DC_LiDAR_HD_1-0_PTS.pdf)
+tree_cover_threshold: 2 # threshold above which to consider vegetation as tree cover (in meters)
+resolution: 1.5 # resolution at which to compute metrics
+resampling_method: bilinear # method to match resolution if necessary (can be "max_pooling" or "bilinear", typically use "bilinear" for upsampling and "max_pooling" for downsampling)
+labels_path:
+  2021: datasets/canopy_height/2021/lidar.vrt
+  2022: datasets/canopy_height/2022/lidar.vrt
+  2023: datasets/canopy_height/2023/lidar.vrt
+forest_mask_path: forest_mask.parquet
+classification_path:
+  2021: datasets/canopy_height/2021/lidar_classification.vrt
+  2022: datasets/canopy_height/2022/lidar_classification.vrt
+  2023: datasets/canopy_height/2023/lidar_classification.vrt
+labels_unit: dm # m(meter), dm(decimeter), cm(centimeter)
+save_pred_fig: true # if true, save a sample of predictions/labels/classifications rasters on evaluated geometries.
+
+model:
+  save_dir: metrics # directory where to save the metrics
+  predictions_path: # can be either a path or a dict of paths to tif/vrt of predictions for each year
+    2021: datasets/canopy_height/predictions/pvtv2/test_2021_m.tif
+    2022: datasets/canopy_height/predictions/pvtv2/test_2022_m.tif
+    2023: datasets/canopy_height/predictions/pvtv2/test_2023_m.tif
+  predictions_unit: m # m(meter), dm(decimeter), cm(centimeter)
+  crs: 2154

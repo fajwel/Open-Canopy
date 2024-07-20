@@ -1,0 +1,32 @@
+_target_: src.data.canopy_datamodule.GEODataModule
+
+geometry_path: ${paths.data_dir}canopy_height/geometries.geojson
+
+imageside: 336 # Value in meters of the side of the image
+imagesize: 224 # Size of the image in pixels
+mean: [124, 124, 124, 124] #global mean of the whole dataset
+std: [124, 124, 124, 124] #null for dataset norm or value
+mean_type: global #global, local, avg_pool or max_pool
+iinter: 1 #interpolation NEAREST = 0 LINEAR = 1 CUBIC = 3
+
+batch_size: 64
+pin_memory: True
+num_workers: 12
+
+# Data Augmentation
+sample_multiplier: 1
+tsize_base: null # null for equal to image size dimension in meters
+# randomly multiply the size by a factor in the sizes
+tsize_enum_sizes: [1]
+tsize_enum_probs: [1]
+# randomly sample frac of the train sample with unform size in the range
+tsize_range_frac: 0.5
+tsize_range_sizes: [0.5, 2]
+#randomly rotate
+trot_prob: 0.5 #probability of rotation
+trot_angle: 90 #max angle (abs) of the rotation
+
+min_overlap: 0.2 # how much must be inside
+
+#How much overlap in frac to use for test
+test_overlap: 0.5

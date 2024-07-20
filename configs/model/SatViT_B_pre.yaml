@@ -1,0 +1,22 @@
+defaults:
+  - _seg_default
+
+net:
+  _target_: src.models.components.SatMAE.SatVitNet
+  channel_groups: [["R", "B", "G"]["irORele"]]
+  channel_embed: 256
+  patch_size: 8
+  embed_dim: 1024
+  num_heads: 16
+  depth: 12
+  mlp_ratio: 4
+
+  #Final upsampling segmentation head
+  segmentation_head:
+    _partial_: True
+    _target_: src.models.components.utils.SimpleSegmentationHead
+    decoder_stride: 2
+
+  #Parameters for pretrained model
+  pretrained: True
+  pretrained_path: datasets/init_models/satmae-vit-base-e199.pth

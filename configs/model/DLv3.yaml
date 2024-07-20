@@ -1,0 +1,8 @@
+defaults:
+  - _seg_default
+
+net:
+  _target_: src.models.components.DeepLab_resnet50.DeepLabResnet50
+  img_size: ${data.imagesize}
+  pretrained: True
+  pretrained_path: datasets/init_models/resnet50-11ad3fa6.pth

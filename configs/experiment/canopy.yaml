@@ -1,0 +1,39 @@
+# @package _global_
+
+# to execute this experiment run:
+# python train.py experiment=example
+
+defaults:
+  - override /data: canopy_height
+
+model:
+  _target_: src.models.regression_module.RegressionModule
+  net:
+    num_channels: 4
+    num_classes: 1
+  loss: l1 #l1 l2 or Huber
+  activation: relu #none relu softplus
+  scheduler:
+    mode: "min"
+    patience: 1
+    factor: 0.5
+  metric_monitored: "val/RMSE"
+
+  warmup_scheduler:
+    fract: 0.04
+
+callbacks:
+  model_checkpoint:
+    monitor: val/RMSE
+    mode: "min"
+  early_stopping:
+    patience: 3
+    mode: "min"
+
+trainer:
+  max_epochs: 25
+  min_epochs: 20
+
+logger:
+  wandb:
+    project: "canopy"

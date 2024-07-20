@@ -1,0 +1,25 @@
+max_n: null # Maximum numberumber of LiDAR HD tiles to sample (one tile is 1kmx1km), keep all within AOI if null
+data_version: null # Specify a version name, if null the version name is the current date in format YYYYMMDDHHmm
+overwrite: false # Overwrite existing data, if False, skip existing data
+
+# Paths
+# LiDAR HD grid (download it from https://diffusion-lidarhd-classe.ign.fr/classe)
+lidar_grid_path: ./
+spot_dir_path: ./
+save_dir_path: ./
+temp_dir_path: ./
+
+# Coordinates of the region of interest where to retrieve the LiDAR HD tiles
+coordinates: null # if null process all available LiDAR tiles
+crs: 4326 # crs of the coordinates (if not null)
+
+lidar:
+  process: true # Retrieve LiDAR tiles from IGN
+  resolution: 1.5 # Resolution of the LiDAR tiles (in meters)
+  format: tif # format of the LiDAR tiles (npy or tif, npy might be faster to load and lighter)
+  method: "nearest" # method for interpolation (nearest, linear, cubic, spline... nearest is the fastest, check numpy documentation for other options)
+  quantile: 1 # when attributing a pixel value, quantile to use on the distribution of lidar points
+
+# HACK: job array cannot except more than 1000 jobs, hence process images from i*n_images_to_process till n_images_to_process*(i+1)
+i: 0 # process images with row indices in selected geometries between n_images_to_process * i and  n_images_to_process * (i + 1) - 1
+n_images_to_process: 1

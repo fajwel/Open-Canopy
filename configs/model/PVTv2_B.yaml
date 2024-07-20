@@ -1,0 +1,13 @@
+defaults:
+  - _seg_default
+
+net:
+  _target_: src.models.components.timmNet.timmNet
+  backbone: pvt_v2_b3.in1k
+  pretrained: True
+  pretrained_path: datasets/init_models/pvt_v2_b3.in1k.bin
+  use_FPN: False
+  segmentation_head:
+    _partial_: True
+    _target_: src.models.components.utils.SimpleSegmentationHead
+    decoder_stride: 32

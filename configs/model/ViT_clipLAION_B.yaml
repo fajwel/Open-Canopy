@@ -1,0 +1,13 @@
+defaults:
+  - _seg_default
+
+net:
+  _target_: src.models.components.clip_ViT.Clip_ViT
+  ViT_patch_size: 16
+  ViT_embed_dim: 768
+  ViT_depth: 12
+  ViT_num_heads: 12
+  decoder_stride: ${model.net.ViT_patch_size}
+  pretrained_encoder: True
+  pretrained_encoder_path: datasets/init_models/CLIP-ViT-B-16-laion2B-s34B-b88K.bin #patchsize 16
+  pretrained_encoder_inter: False #Not implemented

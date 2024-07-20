@@ -1,0 +1,12 @@
+defaults:
+  - ViT_S
+
+net:
+  ViT_patch_size: 16
+  ViT_embed_dim: 1024
+  ViT_depth: 24
+  ViT_num_heads: 16
+  ViT_mlp_ratio: 4.0
+  pretrained_encoder_path: datasets/init_models/tolan_SSLlarge.pth #patchsize 16
+  model_filter_name: "backbone"
+  pretrained_encoder_inter: False

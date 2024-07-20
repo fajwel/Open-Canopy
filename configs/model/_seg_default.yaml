@@ -1,0 +1,42 @@
+_target_: src.models.regression_module.RegressionModule
+
+optimizer:
+  _target_: torch.optim.Adam
+  _partial_: true
+  lr: 1.0e-03
+  weight_decay: 0.0
+
+scheduler:
+  _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+  _partial_: true
+  mode: "min"
+  factor: 0.5
+  patience: 1
+  threshold: 0.01
+  threshold_mode: "rel"
+metric_monitored: "val/RMSE"
+
+warmup_scheduler:
+  _target_: src.models.components.utils.WarmupScheduler
+  _partial_: true
+  min_lr: 1.0e-05
+  max_lr: ${model.optimizer.lr}
+  fract: 0.04 # Fraction of the total number of iterations to warmup
+
+net:
+  img_size: ${data.imagesize}
+  num_channels: 4
+  num_classes: 1
+
+loss: l1 #l1 l2 or Huber
+activation: none #none relu softplus
+
+# tiff saving parameters
+save_eval_only: True # Save predictions just on the evaluation set
+save_freq: 1000 # Save predictions every n epochs (always include the last epoch)
+test_overlap: ${data.test_overlap}
+# Compile model for faster training with pytorch 2.0
+compile: false
+num_classes: ${model.net.num_classes}
+aux_loss_factor: 0.0 # Whether to use auxiliary loss for training the token embedding model
+# use_model_loss: False Not applicable to any model
