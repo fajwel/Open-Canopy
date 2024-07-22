@@ -9,13 +9,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import rasterio
+import rootutils
 from matplotlib.patches import Patch
 from omegaconf import DictConfig, OmegaConf
 from rasterio.mask import mask
 from shapely.geometry import Polygon, box
 from tqdm import tqdm
-
-import rootutils
 
 rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 from src.preprocessing.utils.utils import create_virtual_dataset, extract_and_mask_data
@@ -71,7 +70,9 @@ def main(cfg: DictConfig) -> None:
     seed = cfg.seed
 
     year_list = [2021, 2022, 2023]
-    image_dir_dict = {year: os.path.join(image_dir, str(year)) for year in year_list}
+    image_dir_dict = {
+        year: os.path.join(image_dir, str(year)) for year in year_list
+    }
 
     lidar_gdf_path = os.path.join(save_dir, "lidar_gdf.parquet")
     if not cfg.overwrite and os.path.isfile(lidar_gdf_path):
@@ -102,9 +103,9 @@ def main(cfg: DictConfig) -> None:
                 return box(bbox.left, bbox.bottom, bbox.right, bbox.top)
 
         for year in year_list:
-            image_df_dict[year]["geometry_image_" + str(year)] = image_df_dict[year][
-                "image_path_" + str(year)
-            ].apply(get_geometry_from_tiff)
+            image_df_dict[year]["geometry_image_" + str(year)] = image_df_dict[
+                year
+            ]["image_path_" + str(year)].apply(get_geometry_from_tiff)
             # Convert the DataFrame to a GeoDataFrame
             image_df_dict[year] = gpd.GeoDataFrame(
                 image_df_dict[year],
@@ -123,7 +124,9 @@ def main(cfg: DictConfig) -> None:
             image_df_dict[year] = image_df_dict[year].sort_values(
                 by=["centroid_x", "centroid_y"], ascending=True
             )  # Change `ascending` as needed
-            image_df_dict[year].drop(columns=["centroid_x", "centroid_y"], inplace=True)
+            image_df_dict[year].drop(
+                columns=["centroid_x", "centroid_y"], inplace=True
+            )
             image_df_dict[year].reset_index(inplace=True, drop=True)
 
         # Concat dataframes, check how geometries are matching over years: compute intersection area ratio
@@ -142,7 +145,9 @@ def main(cfg: DictConfig) -> None:
 
         # Load preprocessed lidar tiles
         lidar_gdf = gpd.read_file(
-            os.path.join(os.path.expanduser(lidar_dir), "processed_geometries.geojson")
+            os.path.join(
+                os.path.expanduser(lidar_dir), "processed_geometries.geojson"
+            )
         )
         # lidar_gdf = gpd.read_file(os.path.join(os.path.expanduser(lidar_dir)))
         print(f"There are {lidar_gdf.shape[0]} processed lidar tiles")
@@ -276,7 +281,9 @@ def main(cfg: DictConfig) -> None:
                     if not lidar_test.loc[ix_test[j], "intersect"]:
                         intersection_area = (
                             lidar_test.loc[ix_test[i], "test_tile"]
-                            .intersection(lidar_test.loc[ix_test[j], "test_tile"])
+                            .intersection(
+                                lidar_test.loc[ix_test[j], "test_tile"]
+                            )
                             .area
                         )
                         if intersection_area > 0:
@@ -327,10 +334,12 @@ def main(cfg: DictConfig) -> None:
         # Tag 1km2 tiles that are in the test set
         lidar_gdf["split"] = "buffer"
         combined_test = lidar_test.set_geometry("test_tile").unary_union
-        lidar_gdf.loc[lidar_gdf["geometry"].within(combined_test), "split"] = "test"
-        assert lidar_gdf.query("split=='test'").shape[0] == lidar_test.shape[0] * (
-            (test_side_length / 1000) ** 2
-        )
+        lidar_gdf.loc[
+            lidar_gdf["geometry"].within(combined_test), "split"
+        ] = "test"
+        assert lidar_gdf.query("split=='test'").shape[0] == lidar_test.shape[
+            0
+        ] * ((test_side_length / 1000) ** 2)
         n_test = lidar_gdf.query("split=='test'").shape[0]
         print(
             f"There are {lidar_test.shape[0]} test tiles sampled after dropping overlapping ones, "
@@ -340,7 +349,9 @@ def main(cfg: DictConfig) -> None:
         n_sample_test_after_filtering = lidar_test.shape[0]
         area_test = n_sample_test_after_filtering * square_area
         area_test_buffered = (
-            n_sample_test_after_filtering * ((test_side_length + 2 * buffer) ** 2) / 1e6
+            n_sample_test_after_filtering
+            * ((test_side_length + 2 * buffer) ** 2)
+            / 1e6
         )
         area_ratio_test = area_test / full_area
         area_ratio_test_buffered = area_test_buffered / full_area
@@ -421,7 +432,9 @@ def main(cfg: DictConfig) -> None:
             lidar_dest_list = []
             classif_dest_list = []
 
-            for file_path in tqdm(image_list, desc=f"copying images from {year}"):
+            for file_path in tqdm(
+                image_list, desc=f"copying images from {year}"
+            ):
                 image_name = os.path.basename(file_path)
                 dest_file_path = os.path.join(save_dir_spot, image_name)
                 image_dest_list.append(dest_file_path)
@@ -437,7 +450,9 @@ def main(cfg: DictConfig) -> None:
                     geometry = gdf_year.query("image_path==@file_path")[
                         "geometry_image_" + str(year)
                     ].iloc[0]
-                    extract_and_mask_data(lidar_vrt_path, geometry, lidar_dest_path)
+                    extract_and_mask_data(
+                        lidar_vrt_path, geometry, lidar_dest_path
+                    )
                     print(
                         f"Successfully saved lidar height corresponding to {image_name}"
                     )

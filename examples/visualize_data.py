@@ -1,12 +1,11 @@
-"""
-Visualize SPOT 6-7 data associated to a 1km x 1km geometry
-"""
+"""Visualize SPOT 6-7 data associated to a 1km x 1km geometry."""
 
 import os
+
 import geopandas as gpd
+import matplotlib.pyplot as plt
 import rasterio
 from rasterio.windows import from_bounds
-import matplotlib.pyplot as plt
 
 # Load geometries
 # Supposing you are at the root of Open-Canopy

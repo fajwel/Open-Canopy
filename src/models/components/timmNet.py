@@ -1,16 +1,12 @@
 import timm
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
-from models.components.utils import (
-    FPN,
+from models.components.utils import (  # FPN,
     SimpleSegmentationHead,
     infer_output,
     set_first_layer,
 )
 from src.models.components.utils.lora import apply_lora
-from src.models.components.utils.utils import set_first_layer
 from src.utils import pylogger
 
 log = pylogger.RankedLogger(__name__, rank_zero_only=True)

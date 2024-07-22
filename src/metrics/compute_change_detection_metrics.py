@@ -10,6 +10,10 @@ import rootutils
 
 rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
+from omegaconf import DictConfig, OmegaConf
+from rasterio.plot import show
+from tqdm import tqdm
+
 from src.metrics.metrics_utils import (
     compute_change_metrics,
     extract_tif_from_bounds,
@@ -18,9 +22,6 @@ from src.metrics.metrics_utils import (
     mask_with_geometry,
     plot_detections,
 )
-from omegaconf import DictConfig, OmegaConf
-from rasterio.plot import show
-from tqdm import tqdm
 
 
 def create_fixed_size_bbox(geometry, width=300, height=300):
@@ -64,7 +65,9 @@ def main(cfg: DictConfig) -> None:
         os.makedirs(os.path.join(cfg.save_dir, "data"))
 
     # save the config next to the data
-    OmegaConf.save(cfg, os.path.join(cfg.save_dir, "compute_metrics_config.yaml"))
+    OmegaConf.save(
+        cfg, os.path.join(cfg.save_dir, "compute_metrics_config.yaml")
+    )
 
     # Load predictions and labels, mask on available labels (either labels_1 or labels_2,
     # not both as we suppose one of them is lidarHD, hence available everywhere)
@@ -90,7 +93,9 @@ def main(cfg: DictConfig) -> None:
         image_to_get_mask_from_name = "labels_2"
 
     if cfg.extract_tif:
-        print(f"Extracting images from bounds of {image_to_get_mask_from_path}")
+        print(
+            f"Extracting images from bounds of {image_to_get_mask_from_path}"
+        )
         reference_image_path = image_to_get_mask_from_path
         # Copy the file
         output_path = os.path.join(
@@ -116,7 +121,9 @@ def main(cfg: DictConfig) -> None:
         )
         cfg.inputs_2.path = output_path
 
-        output_path = os.path.join(cfg.save_dir, "data", f"{image_to_mask_name}.tif")
+        output_path = os.path.join(
+            cfg.save_dir, "data", f"{image_to_mask_name}.tif"
+        )
         extract_tif_from_bounds(
             reference_image_path,
             image_to_mask_path,
@@ -134,7 +141,9 @@ def main(cfg: DictConfig) -> None:
         )
         cfg.classification.path = output_path
 
-        output_path = os.path.join(cfg.save_dir, "data", f"predictions_{1}.tif")
+        output_path = os.path.join(
+            cfg.save_dir, "data", f"predictions_{1}.tif"
+        )
         extract_tif_from_bounds(
             reference_image_path,
             cfg.predictions_1.path,
@@ -145,7 +154,9 @@ def main(cfg: DictConfig) -> None:
 
         if cfg.predictions_2.path is not None:
             # handle special case when only loss is available and given as image_1
-            output_path = os.path.join(cfg.save_dir, "data", f"predictions_{2}.tif")
+            output_path = os.path.join(
+                cfg.save_dir, "data", f"predictions_{2}.tif"
+            )
             extract_tif_from_bounds(
                 reference_image_path,
                 cfg.predictions_2.path,
@@ -196,7 +207,9 @@ def main(cfg: DictConfig) -> None:
                 )
                 mask_gdf.boundary.plot(ax=axes, edgecolor="red", linewidth=2)
             fig.savefig(
-                os.path.join(cfg.save_dir, "figures", f"masked_{image_to_mask_name}"),
+                os.path.join(
+                    cfg.save_dir, "figures", f"masked_{image_to_mask_name}"
+                ),
                 bbox_inches="tight",
                 pad_inches=0,
             )
@@ -364,7 +377,9 @@ def main(cfg: DictConfig) -> None:
         geometry = metrics_out["gdf_filtered"]["geometry"].iloc[ix_change]
         sub_bounds = create_fixed_size_bbox(geometry, width=300, height=300)
 
-        metrics_out_ix = get_metrics(sub_bounds, cfg.delta_fig, cfg.min_area_fig)
+        metrics_out_ix = get_metrics(
+            sub_bounds, cfg.delta_fig, cfg.min_area_fig
+        )
 
         save_prefix = str(ix_change)
 

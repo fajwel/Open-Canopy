@@ -51,12 +51,13 @@ For each tile, we provide VHR images at a 1.5 m resolution (b) and associated Li
 ## Installation
 
 ### System requirements
+
 - Storage: 360GB of available storage to download the dataset.
 - Training: a recent GPU to train models with default configs (e.g., V100 32GB, A100, RTX8000...).
 
 ### Python environment
 
-We provide here instructions for installation with miniconda/mamba. 
+We provide here instructions for installation with miniconda/mamba.
 Installation was tested on Mac and Linux.
 
 If you are installing on a computer without GPU, update the `environment.yaml`file (uncomment `cpu_only`and comment `pytorch-cuda=11.8`).
@@ -97,23 +98,20 @@ Note: Alternative size of models not used in the benchmark are commented out in 
 
 ### Download Open-Canopy dataset
 
-We recommend using [Hugging Face python API](https://huggingface.co/docs/huggingface_hub/guides/download) to download the [Open-Canopy dataset](https://huggingface.co/datasets/AI4Forest/Open-Canopy). 
+We recommend using [Hugging Face python API](https://huggingface.co/docs/huggingface_hub/guides/download) to download the [Open-Canopy dataset](https://huggingface.co/datasets/AI4Forest/Open-Canopy).
 
 The dataset must be located at the following location: `Open-Canopy/datasets` (unless you change paths in `configs`).
-A script `scripts/download_dataset.sh` is provided to do it seemlessly:
+A script `scripts/download_dataset.sh` is provided to do it seamlessly:
 
 ```bash
 # Supposing you are at the root or Open-Canopy
 python scripts/download_dataset.py
 ```
 
-
 ## Usage
 
-This repository is built upon [PyTorch](https://pytorch.org/). Its structure was bootstraped from [this code template](https://github.com/ashleve/lightning-hydra-template),
-which heavily relies on [Hydra](https://hydra.cc/) and [Pytorch-Lightning](https://github.com/PyTorchLightning/pytorch-lightning). Parameters for training can be accessed and modified through the config files in the `configs` folder or overrided in the command line.
-
-
+This repository is built upon [PyTorch](https://pytorch.org/). Its structure was bootstrapped from [this code template](https://github.com/ashleve/lightning-hydra-template),
+which heavily relies on [Hydra](https://hydra.cc/) and [Pytorch-Lightning](https://github.com/PyTorchLightning/pytorch-lightning). Parameters for training can be accessed and modified through the config files in the `configs` folder or overridden in the command line.
 
 ### Data preprocessing
 
@@ -126,7 +124,6 @@ As described in the supplementary material of the [paper](https://arxiv.org/abs/
 A grid of 1km x 1km tiles is provided in the file "geometries.geojson", with a column "split" indicating to which split each tile belongs ("train"/"val"/"test"/"buffer").
 
 See `examples/visualize_data.py` for an example of how to plot data for a given geometry.
-
 
 ### Train a model
 
@@ -141,7 +138,7 @@ python src/train.py
 Train a Unet with the default configuration:
 
 ```bash
-python src/train.py model=Unet
+python src/train.py model=smp_unet
 ```
 
 After training, the model automatically proceeds to prediction and evaluation on the test tiles. The resulting metrics, along with other logs in the `logs` directory, are saved in an Excel file for easy reference and analysis.
@@ -170,7 +167,7 @@ These two scripts output excel files with computed metrics.
 ## Pretrained models
 
 Unet and PVTv2 models trained on Open-Canopy are available in the `pretrained_models` folder of the [dataset](https://huggingface.co/datasets/AI4Forest/Open-Canopy/tree/main). Corresponding configs are located at `configs/model/PVTv2_B.yaml`and `configs/model/smp_unet.yaml`.
-Additionnal documentation coming soon.
+Additional documentation coming soon.
 
 ## Reference
 
@@ -193,13 +190,13 @@ This paper is part of the project *AI4Forest*, which is funded by the French Nat
 
 The experiments conducted in this study were performed using HPC/AI resources provided by GENCI-IDRIS (Grant 2023-AD010114718 and 2023-AD011014781) and [Inria](https://inria.fr/fr).
 
-
 ## Dataset license
 
 The "OPEN LICENCE 2.0/LICENCE OUVERTE" is a license created by the French government specifically for the purpose of facilitating the dissemination of open data by public administration.
 If you are looking for an English version of this license, you can find it at the [official github page](https://github.com/etalab/licence-ouverte).
 
 As stated by the license :
+
 - Applicable legislation: This licence is governed by French law.
 - Compatibility of this licence: This licence has been designed to be compatible with any free licence that at least requires an acknowledgement of authorship, and specifically with the previous version of this licence as well as with the following licences: United Kingdom’s “Open Government Licence” (OGL), Creative Commons’ “Creative Commons Attribution” (CC-BY) and Open Knowledge Foundation’s “Open Data Commons Attribution” (ODC-BY).
 

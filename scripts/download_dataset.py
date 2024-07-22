@@ -1,5 +1,6 @@
-from huggingface_hub import snapshot_download
 import os
+
+from huggingface_hub import snapshot_download
 
 # Create datasets/canopy folder in Open-Canopy
 if not os.path.isdir("datasets"):

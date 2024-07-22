@@ -657,14 +657,14 @@ class MaskedScaleViT(nn.Module):
     def subsample(seq, mask):
         if mask is None:
             return seq
-        n, l = seq.shape[:2]
+        n, _ = seq.shape[:2]
         _, l_mask = mask.shape
         x_arr = torch.arange(n).view(n, 1).repeat(1, l_mask)
         seq = seq[x_arr, mask]
         return seq
 
     def set_fix_decoding_size(self, fixed_output_size):
-        if type(fixed_output_size) == list:
+        if isinstance(fixed_output_size, list):
             fixed_output_size = fixed_output_size[0]
         assert fixed_output_size % self.patch_size == 0
         self.fixed_output_size = fixed_output_size // self.patch_size

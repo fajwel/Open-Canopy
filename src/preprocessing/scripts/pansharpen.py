@@ -6,9 +6,9 @@ import hydra
 import numpy as np
 import pandas as pd
 import rasterio
+import rootutils
 from omegaconf import DictConfig, OmegaConf
 from tqdm import tqdm
-import rootutils
 
 rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
@@ -30,7 +30,9 @@ def gdal_pansharpen(ms_path, pan_path, out_path):
     subprocess.run(command, check=True, capture_output=True)
 
 
-@hydra.main(version_base=None, config_path="../config", config_name="pansharpen_config")
+@hydra.main(
+    version_base=None, config_path="../config", config_name="pansharpen_config"
+)
 def main(cfg: DictConfig) -> None:
     print(OmegaConf.to_yaml(cfg))
 
@@ -85,7 +87,9 @@ def main(cfg: DictConfig) -> None:
         zip(spot_df["ms"], spot_df["pan"]), desc="Pansharpening images"
     ):
         image_name = (
-            "pansharpened_" + image_ms_path.split("/")[-1].split("_")[2][0:14] + ".tif"
+            "pansharpened_"
+            + image_ms_path.split("/")[-1].split("_")[2][0:14]
+            + ".tif"
         )
         out_path = os.path.join(save_dir, image_name)
         if not os.path.isfile(out_path):
@@ -115,10 +119,16 @@ def main(cfg: DictConfig) -> None:
                 min_quantile_list = []
                 max_quantile_list = []
                 for image in tqdm(image_names, desc="Computing quantiles"):
-                    with rasterio.open(os.path.join(save_dir, image), "r") as src:
+                    with rasterio.open(
+                        os.path.join(save_dir, image), "r"
+                    ) as src:
                         data = src.read()
-                        min_quantile_list.append(np.percentile(data, 2, axis=(1, 2)))
-                        max_quantile_list.append(np.percentile(data, 98, axis=(1, 2)))
+                        min_quantile_list.append(
+                            np.percentile(data, 2, axis=(1, 2))
+                        )
+                        max_quantile_list.append(
+                            np.percentile(data, 98, axis=(1, 2))
+                        )
 
                 min_quantile_list = np.vstack(min_quantile_list)
                 max_quantile_list = np.vstack(max_quantile_list)
@@ -132,7 +142,9 @@ def main(cfg: DictConfig) -> None:
                     [min_quantile_list, max_quantile_list],
                 )
             else:
-                quantile_list = np.load(os.path.join(save_dir, "quantiles.npy"))
+                quantile_list = np.load(
+                    os.path.join(save_dir, "quantiles.npy")
+                )
                 min_value = np.min(quantile_list[0], axis=0)
                 max_value = np.max(quantile_list[1], axis=0)
 
@@ -143,9 +155,13 @@ def main(cfg: DictConfig) -> None:
 
         if cfg.scale_to_eight_bits:
             for i in range(data.shape[0]):
-                data[i, :, :] = np.clip(data[i, :, :], min_value[i], max_value[i])
+                data[i, :, :] = np.clip(
+                    data[i, :, :], min_value[i], max_value[i]
+                )
                 data[i, :, :] = (
-                    (data[i, :, :] - min_value[i]) / (max_value[i] - min_value[i]) * 255
+                    (data[i, :, :] - min_value[i])
+                    / (max_value[i] - min_value[i])
+                    * 255
                 )
             data = data.astype(np.uint8)
             profile.update(dtype=rasterio.uint8, BIGTIFF="YES")

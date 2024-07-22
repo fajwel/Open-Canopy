@@ -3,7 +3,7 @@ defaults:
 
 net:
   _target_: src.models.components.SatMAE.SatVitNet
-  channel_groups: [["R", "B", "G"]["irORele"]]
+  channel_groups: [["R", "B", "G"], ["irORele"]]
   channel_embed: 256
   patch_size: 8
   embed_dim: 1024

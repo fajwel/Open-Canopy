@@ -41,7 +41,7 @@ def adjust_state_dict_prefix(
     new_state_dict = {}
     for key, value in state_dict.items():
         # Assure we're only keeping keys that we need for the current model component.
-        if not needed in key:
+        if needed not in key:
             continue
 
         # Update the key prefixes to match what the model expects.

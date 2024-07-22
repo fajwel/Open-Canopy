@@ -58,7 +58,7 @@ class TiffSampler(Sampler):
         tcell = convert_icell_to_tcell_v2(
             icell["img"], icell["square"], side_px, self.iinter
         )
-        if not self.mask_geometry is None:
+        if self.mask_geometry is not None:
             area_mask = self.get_mask(
                 icell["safft_world_to_icell"],
                 tcell["safft_icell_to_tcell"],

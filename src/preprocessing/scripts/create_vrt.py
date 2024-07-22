@@ -2,8 +2,8 @@ import glob
 import os
 
 import hydra
-from omegaconf import DictConfig, OmegaConf
 import rootutils
+from omegaconf import DictConfig, OmegaConf
 
 rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
@@ -13,7 +13,9 @@ from src.preprocessing.utils.utils import (
 )
 
 
-@hydra.main(version_base=None, config_path="../config", config_name="create_vrt_config")
+@hydra.main(
+    version_base=None, config_path="../config", config_name="create_vrt_config"
+)
 def main(cfg: DictConfig) -> None:
     print(OmegaConf.to_yaml(cfg))
     dir_path = os.path.expanduser(cfg.dir_path)
@@ -21,7 +23,9 @@ def main(cfg: DictConfig) -> None:
     files_list = glob.glob(full_pattern, recursive=cfg.recursive)
     # For LiDAR, also create a vrt for classification files
     classif_files_list = [x for x in files_list if "classif" in x]
-    files_list = [x for x in files_list if ("classif" not in x) and ("ISSUE" not in x)]
+    files_list = [
+        x for x in files_list if ("classif" not in x) and ("ISSUE" not in x)
+    ]
     if cfg.check_invalid_files:
         files_list = check_for_corrupted_files(files_list)
         if len(classif_files_list):
@@ -35,7 +39,9 @@ def main(cfg: DictConfig) -> None:
         files_list, vrt_path, crs=cfg.crs, noDataValue=cfg.noDataValue
     )
     if len(classif_files_list):
-        classif_vrt_path = os.path.join(dir_path, "full_classification_mask.vrt")
+        classif_vrt_path = os.path.join(
+            dir_path, "full_classification_mask.vrt"
+        )
         create_virtual_dataset(
             classif_files_list,
             classif_vrt_path,
