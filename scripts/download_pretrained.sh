@@ -1,8 +1,8 @@
 #!/bin/bash
 
 cd datasets || exit
-mkdir init_models
-cd init_models || exit
+mkdir Models
+cd Models || exit
 
 curl -L https://download.pytorch.org/models/resnet34-333f7ec4.pth -o resnet34-333f7ec4.pth
 curl -L https://download.pytorch.org/models/resnet50-11ad3fa6.pth -o resnet50-11ad3fa6.pth

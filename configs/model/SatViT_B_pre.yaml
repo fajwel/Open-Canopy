@@ -19,4 +19,4 @@ net:
 
   #Parameters for pretrained model
   pretrained: True
-  pretrained_path: datasets/init_models/satmae-vit-base-e199.pth
+  pretrained_path: datasets/Models/satmae-vit-base-e199.pth

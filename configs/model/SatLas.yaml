@@ -4,7 +4,7 @@ defaults:
 net:
   _target_: src.models.components.satlas.Satlas
   pretrained: True
-  pretrained_path: datasets/init_models/SatLas_aerial_swinb_si.pth
+  pretrained_path: datasets/Models/SatLas_aerial_swinb_si.pth
   use_FPN: False
   segmentation_head:
     _partial_: True

@@ -3,4 +3,4 @@ defaults:
 
 net:
   ViT_patch_size: 14
-  pretrained_encoder_path: datasets/init_models/dinov2_vitb14_pretrain.pth #patchsize 14
+  pretrained_encoder_path: datasets/Models/dinov2_vitb14_pretrain.pth #patchsize 14

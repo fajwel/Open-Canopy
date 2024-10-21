@@ -664,7 +664,7 @@ class MaskedScaleViT(nn.Module):
         return seq
 
     def set_fix_decoding_size(self, fixed_output_size):
-        if isinstance(fixed_output_size, list):
+        if type(fixed_output_size) == list:
             fixed_output_size = fixed_output_size[0]
         assert fixed_output_size % self.patch_size == 0
         self.fixed_output_size = fixed_output_size // self.patch_size

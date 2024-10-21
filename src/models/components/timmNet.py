@@ -1,12 +1,16 @@
 import timm
+import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
-from models.components.utils import (  # FPN,
+from models.components.utils import (
+    FPN,
     SimpleSegmentationHead,
     infer_output,
     set_first_layer,
 )
 from src.models.components.utils.lora import apply_lora
+from src.models.components.utils.utils import set_first_layer
 from src.utils import pylogger
 
 log = pylogger.RankedLogger(__name__, rank_zero_only=True)
@@ -61,9 +65,9 @@ class timmNet(nn.Module):
                 "features_only": True,
             }
             print(f"{additional_arg=}")
-        elif backbone.startswith("PVT_v2"):
+        elif backbone.startswith("pvt_v2"):
             additional_arg = {"features_only": True}
-        elif backbone.startswith("PCPVT"):
+        elif backbone.startswith("twins_pcpvt"):
             additional_arg = {}
         elif backbone.startswith("vit_base_r50"):
             additional_arg = {"num_classes": 0}  # {"pretrained_strict": False}

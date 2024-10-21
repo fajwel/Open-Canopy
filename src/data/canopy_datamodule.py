@@ -1,8 +1,8 @@
 import gc
 import time
 from pathlib import Path
+import os
 from typing import Any, Dict, List, Optional
-
 import geopandas as gpd
 import hydra
 import numpy as np
@@ -185,42 +185,48 @@ class GEODataModule(LightningDataModule):
 
         # group per year
         self.years = list(set(geometries_data["lidar_year"]))
-        relevent_split = ["train", "val", "test"]
+        relevant_split = ["train", "val", "test"]
         if stage == "validate":
-            relevent_split = ["val"]
-        elif stage == "test":
-            relevent_split = ["test", "predict"]
+            relevant_split = ["val"]
+        elif stage in ["test", "predict"]:
+            relevant_split = ["test", "predict"]
         self.gf_aois = {
             "name": [],
             "split": [],
             "year": [],
             "geometry": [],
-            "vrt": [],
-            "vrt_spot": [],
-            "vrt_lidar": [],
-            "vrt_class": [],
+            "tif": [],
+            "tif_spot": [],
+            "tif_lidar": [],
+            "tif_class": [],
         }
+        # TODO refactor years into "names" or "aois"
         for year in self.years:
-            geometries_year = geometries_data.query(f"lidar_year == {year}")
-            for split in relevent_split:
-                geometries_split = geometries_year.query(f"split == '{split}'")
+            geometries_year = geometries_data.query("lidar_year == @year")
+            for split in relevant_split:
+                geometries_split = geometries_year.query("split == @split")
                 self.gf_aois["name"].append(f"{split}_{year}")
                 self.gf_aois["split"].append(split)
                 self.gf_aois["year"].append(year)
                 self.gf_aois["geometry"].append(
-                    shapely.union_all(
-                        geometries_split["geometry"], grid_size=100
+                    shapely.union_all(geometries_split["geometry"], grid_size=100)
+                )
+                self.gf_aois["tif"].append(self.datadir / str(year))
+                extension = (
+                    ".vrt"
+                    if os.path.exists(os.path.join(self.datadir, str(year), "spot.vrt"))
+                    else ".tif"
+                )
+                self.gf_aois["tif_spot"].append(
+                    os.path.join(self.datadir, str(year), "spot" + extension)
+                )
+                self.gf_aois["tif_lidar"].append(
+                    os.path.join(self.datadir, str(year), "lidar" + extension)
+                )
+                self.gf_aois["tif_class"].append(
+                    os.path.join(
+                        self.datadir, str(year), "lidar_classification" + extension
                     )
-                )
-                self.gf_aois["vrt"].append(self.datadir / str(year))
-                self.gf_aois["vrt_spot"].append(
-                    self.datadir / str(year) / "spot.vrt"
-                )
-                self.gf_aois["vrt_lidar"].append(
-                    self.datadir / str(year) / "lidar.vrt"
-                )
-                self.gf_aois["vrt_class"].append(
-                    self.datadir / str(year) / "lidar_classification.vrt"
                 )
         # Create geodataframe with areas of interest
         self.gf_aois = gpd.GeoDataFrame(
@@ -230,7 +236,7 @@ class GEODataModule(LightningDataModule):
         # get target profile
         self.raster_targets = {}
         for aoi_name, row_aoi in self.gf_aois.iterrows():
-            with rasterio.open(row_aoi["vrt_spot"]) as src:
+            with rasterio.open(row_aoi["tif_spot"]) as src:
                 self.raster_targets[aoi_name] = {"profile": src.profile}
 
         # Assign number of samples to each gf_aois proportional to area (divisible by batchsize)
@@ -241,10 +247,7 @@ class GEODataModule(LightningDataModule):
         for id, row in self.gf_aois.iterrows():
             self.gf_aois.loc[id, "train_samples"] = (
                 np.ceil(
-                    row["geometry"].area
-                    / imageside**2
-                    * sample_multiplier
-                    / batch_size
+                    row["geometry"].area / imageside**2 * sample_multiplier / batch_size
                 ).astype(int)
                 * batch_size
             )
@@ -253,7 +256,7 @@ class GEODataModule(LightningDataModule):
             log.info("Computing dataset mean and std for normalisation")
             mean, std = compute_data_stat(
                 self.gf_aois.query("split in ['train', 'val']"),
-                ["vrt_spot"],
+                ["tif_spot"],
                 scale=12,
             )
         else:
@@ -269,16 +272,16 @@ class GEODataModule(LightningDataModule):
             # Create Sampler
             inputSamplers = [
                 TiffSampler(
-                    row_aoi["vrt_spot"],
+                    row_aoi["tif_spot"],
                     aoi_name,
                     iinter,
                     mask_geometry=row_aoi["geometry"],
                 )
             ]
             targetSamplers = [
-                TiffSampler(row_aoi["vrt_lidar"], aoi_name, iinter),
+                TiffSampler(row_aoi["tif_lidar"], aoi_name, iinter),
                 TiffSampler(
-                    row_aoi["vrt_class"],
+                    row_aoi["tif_class"],
                     aoi_name,
                     0,  # Nearest Neighbour
                 ),
@@ -328,13 +331,12 @@ class GEODataModule(LightningDataModule):
 
         # Check targets, assign number of squares inside
         self.gf_aois["eval_samples"] = {
-            k: len(v.dataset.gf_squares)
-            for k, v in self.dloaders_gridsampling.items()
+            k: len(v.dataset.gf_squares) for k, v in self.dloaders_gridsampling.items()
         }
 
         # Print combined data stats
         for split, iids in self.gf_aois.groupby("split").groups.items():
-            gf = self.gf_aois.loc[iids].drop(columns=["vrt"])
+            gf = self.gf_aois.loc[iids].drop(columns=["tif"])
             with pd.option_context(
                 "display.max_rows",
                 None,
@@ -415,9 +417,7 @@ class GEODataModule(LightningDataModule):
 
             gf_train_squares.append(gf_aoi_squares)
 
-        gf_train_squares = pd.concat(
-            gf_train_squares, axis=0, ignore_index=True
-        )
+        gf_train_squares = pd.concat(gf_train_squares, axis=0, ignore_index=True)
         # Log for debugging
         # dep_fold = (
         #     self.output_dir
@@ -454,10 +454,20 @@ class GEODataModule(LightningDataModule):
         train_names = []
         # self.gf_aois.query("split == 'train'").index.tolist()
         valLoaders = [
-            self.dloaders_gridsampling[name]
-            for name in validation_names + train_names
+            self.dloaders_gridsampling[name] for name in validation_names + train_names
         ]
         return valLoaders
+
+    def _get_inference_dataloader(self, split="test") -> DataLoader[Any]:
+        """Create and return a dataloader for inference.
+
+        Returns:
+            The test dataloader.
+        """
+        gc.collect()
+        test_names = self.gf_aois.query("split == @split").index.tolist()
+        testLoaders = [self.dloaders_gridsampling[name] for name in test_names]
+        return testLoaders
 
     def test_dataloader(self) -> DataLoader[Any]:
         """Create and return the test dataloader.
@@ -465,10 +475,7 @@ class GEODataModule(LightningDataModule):
         Returns:
             The test dataloader.
         """
-        gc.collect()
-        test_names = self.gf_aois.query("split == 'test'").index.tolist()
-        testLoaders = [self.dloaders_gridsampling[name] for name in test_names]
-        return testLoaders
+        return self._get_inference_dataloader(split="test")
 
     def predict_dataloader(self) -> DataLoader[Any]:
         """Create and return the test dataloader.
@@ -476,9 +483,7 @@ class GEODataModule(LightningDataModule):
         Returns:
             The test dataloader.
         """
-        pred_names = self.gf_aois.query("split == 'pred'").index.tolist()
-        predLoaders = [self.dloaders_gridsampling[name] for name in pred_names]
-        return predLoaders
+        return self._get_inference_dataloader(split="predict")
 
     def on_after_batch_transfer(self, batch, dataloader_idx):
         """Lightning hook that is called after data is moved to device. Used to normalize the data.
@@ -534,7 +539,7 @@ class GEODataModule(LightningDataModule):
         for aoi_name, row_aoi in self.gf_aois.iterrows():
             WH = (self.hparams.imagesize, self.hparams.imagesize)
 
-            with rasterio.open(row_aoi["vrt_spot"]) as src:
+            with rasterio.open(row_aoi["tif_spot"]) as src:
                 raster_afft = src.profile["transform"]
                 self.gf_aois.loc[aoi_name, "transform"] = raster_afft
             poly_aoi = row_aoi["geometry"]
@@ -639,9 +644,7 @@ class GEODataModule(LightningDataModule):
             for result in result_list:
                 squares.extend(result.get())
 
-            gf_aoi_squares = gpd.GeoDataFrame(
-                geometry=squares, crs=self.gf_aois.crs
-            )
+            gf_aoi_squares = gpd.GeoDataFrame(geometry=squares, crs=self.gf_aois.crs)
             gf_aoi_squares["aoi_name"] = aoi_name
             square_dict[aoi_name] = gf_aoi_squares
         pool.close()

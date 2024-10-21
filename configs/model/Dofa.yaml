@@ -2,10 +2,10 @@ defaults:
   - _seg_default
 
 net:
-  _target_: src.models.components.timmNet.timmNet
-  backbone: "vit_base_r50_s16_224.orig_in21k"
+  _target_: src.models.components.dofa.DOFA
   pretrained: True
-  pretrained_path: datasets/Models/hvit_base_r50_s16_224.orig_in21k.bin
+  pretrained_path: datasets/Models/DOFA_ViT_base_e100.pth
+  wavelengths: [0.660, 0.560, 0.490, 0.825]
   segmentation_head:
     _partial_: True
     _target_: src.models.components.utils.SimpleSegmentationHead

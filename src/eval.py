@@ -1,13 +1,13 @@
 import os
 import sys
 from typing import Any, Dict, List, Tuple
+import yaml
 
 import hydra
 import rootutils
 from lightning import LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig
-from sympy import check_assumptions
 
 rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 # ------------------------------------------------------------------------------------ #
@@ -48,9 +48,11 @@ def evaluate(cfg: DictConfig) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     :param cfg: DictConfig configuration composed by Hydra.
     :return: Tuple[dict, dict] with metrics and dict with all instantiated objects.
     """
+
     assert cfg.ckpt_path
 
     log.info(f"Instantiating datamodule <{cfg.data._target_}>")
+
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.data)
 
     log.info(f"Instantiating model <{cfg.model._target_}>")
@@ -74,22 +76,23 @@ def evaluate(cfg: DictConfig) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         log.info("Logging hyperparameters!")
         log_hyperparameters(object_dict)
 
-    log.info("Starting testing!")
-    trainer.test(model=model, datamodule=datamodule, ckpt_path=cfg.ckpt_path)
-    log.info("End of testing!")
-    # for predictions use trainer.predict(...)
-    # log.info("Starting predicting!")
-    # predictions = trainer.predict(model=model, dataloaders=dataloaders, ckpt_path=cfg.ckpt_path)
-    # log.info("End of predicting!")
+    if cfg.task_name == "test":
+        log.info("Starting testing!")
+        trainer.test(model=model, datamodule=datamodule, ckpt_path=cfg.ckpt_path)
+        log.info("End of testing!")
+    elif cfg.task_name == "predict":
+        log.info("Starting predicting!")
+        _ = trainer.predict(model=model, datamodule=datamodule, ckpt_path=cfg.ckpt_path)
+        log.info("End of predicting!")
+    else:
+        raise ValueError("'task_name' must be 'test' or 'predict' for 'eval.py' script")
 
     metric_dict = trainer.callback_metrics
 
     return metric_dict, object_dict
 
 
-@hydra.main(
-    version_base="1.3", config_path="../configs", config_name="eval.yaml"
-)
+@hydra.main(version_base="1.3", config_path="../configs", config_name="eval.yaml")
 def main(cfg: DictConfig) -> None:
     """Main entry point for evaluation.
 
@@ -109,9 +112,7 @@ if __name__ == "__main__":
         training_dir = sys.argv[1]
     else:
         raise ValueError("Please provide a training result directory")
-    assert os.path.isdir(
-        training_dir
-    ), "Please provide a valid training directory"
+    assert os.path.isdir(training_dir), "Please provide a valid training directory"
     assert os.path.isfile(
         os.path.join(training_dir, ".hydra", "config.yaml")
     ), "No config.yaml found in training directory"
@@ -134,9 +135,7 @@ if __name__ == "__main__":
         "-best",
     ], "Please provide a valid checkpoint type"
     if checkpoint_type == "-last":
-        checkpoint_path = os.path.join(
-            training_dir, "checkpoints", "last.ckpt"
-        )
+        checkpoint_path = os.path.join(training_dir, "checkpoints", "last.ckpt")
     else:
         # look into /checkpoints/ for other file
         files_list = os.listdir(os.path.join(training_dir, "checkpoints"))
@@ -146,16 +145,12 @@ if __name__ == "__main__":
             if file_name.startswith("epoch_") and file_name.endswith(".ckpt")
         ]
         if len(files_list) == 0:
-            raise ValueError(
-                "No best epoch checkpoint found in training directory"
-            )
+            raise ValueError("No best epoch checkpoint found in training directory")
         elif len(files_list) > 1:
             raise ValueError(
                 "Multiple best epoch checkpoints found in training directory"
             )
-        checkpoint_path = os.path.join(
-            training_dir, "checkpoints", files_list[0]
-        )
+        checkpoint_path = os.path.join(training_dir, "checkpoints", files_list[0])
 
     # generate cmd line for calling hydra
     cmd = [
@@ -166,7 +161,7 @@ if __name__ == "__main__":
         config_dir,
         "ckpt_path=" + checkpoint_path,
         "+trainer=gpu",
-    ]
+    ] + sys.argv[3:]
 
     # override cmd line args
     sys.argv = cmd

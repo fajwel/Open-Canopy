@@ -2,8 +2,9 @@ spot_dir: ./ # Must contains two folders "spot_<year>_ms" and "spot_<year>_pan" 
 year: 2021 # year to which apply pansharpening
 save_dir: ./
 version: null # Specify a version name, if null the version name is the current date in format YYYYMMDDHHmm
-compress: true # lzw compression
+compress: true # zstd compression
 tiled: true # 256x256
 scale_to_eight_bits: true # clip with max_value and scale to 0-255
 remove_uncompressed: true # keep only compressed pansharpened images
 max_value: [2000, 2000, 2000, 2000] # upper bound for clipping and scaling, if null use max 98 percentile of all images for each band
+

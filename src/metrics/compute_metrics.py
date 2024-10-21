@@ -12,6 +12,9 @@ from omegaconf import DictConfig, OmegaConf
 from rasterio.enums import Resampling
 from shapely.geometry import box
 from tqdm import tqdm
+import rootutils
+
+rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
 try:
     from src.metrics.metrics_utils import (
@@ -75,7 +78,7 @@ def compute_metrics(
     bins=[0, 2, 5, 10, 15, 20, 30, 60],
     resolution=1.5,
     labels_unit="dm",
-    predictions_unit="dm",
+    predictions_unit="m",
     resampling_method="bilinear",
     classes_to_keep=[5],
     tree_cover_threshold=2,
@@ -205,9 +208,7 @@ def compute_metrics(
 
     # Compute metrics on each bin
     bins = bins
-    bin_keys = [
-        str(bins[i]) + "-" + str(bins[i + 1]) for i in range(0, len(bins) - 1)
-    ]
+    bin_keys = [str(bins[i]) + "-" + str(bins[i + 1]) for i in range(0, len(bins) - 1)]
 
     label_count_bin = {i: [] for i in range(1, len(bins))}
     pred_count_bin = {i: [] for i in range(1, len(bins))}
@@ -240,9 +241,7 @@ def compute_metrics(
     create_hdf5_resizable_dataset(predictions_save_path, bin_keys)
 
     forest_mask_gdf = gpd.read_parquet(resolve_path(forest_mask_path))
-    for ix_row, row in tqdm(
-        gdf.iterrows(), desc="Retrieve data for each tile"
-    ):
+    for ix_row, row in tqdm(gdf.iterrows(), desc="Retrieve data for each tile"):
         geometry = row["geometry"]
         year = row["lidar_year"]
         if isinstance(labels_path, (dict, DictConfig)):
@@ -250,26 +249,14 @@ def compute_metrics(
         else:
             label_path = os.path.join(dataset_dir, labels_path)
         if isinstance(classification_path, (dict, DictConfig)):
-            classification_path = os.path.join(
-                dataset_dir, classification_path[year]
-            )
+            classification_path = os.path.join(dataset_dir, classification_path[year])
         else:
-            classification_path = os.path.join(
-                dataset_dir, classification_path
-            )
+            classification_path = os.path.join(dataset_dir, classification_path)
         if isinstance(predictions_path, (dict, DictConfig)):
             prediction_path = os.path.join(dataset_dir, predictions_path[year])
         else:
             prediction_path = os.path.join(dataset_dir, predictions_path)
-        if (
-            resampling_method == "bilinear"
-            or resampling_method == Resampling.bilinear
-        ):
-            resampling_method = Resampling.bilinear
-        else:
-            raise ValueError(
-                f"Resampling method {resampling_method} is not implemented."
-            )
+
         labels = get_window(
             label_path,
             geometry=geometry,
@@ -284,7 +271,7 @@ def compute_metrics(
             geometry,
             classes_to_keep,
             resolution=resolution,
-            resampling_method=Resampling.mode,
+            resampling_method=resampling_method,
         )
         predictions = get_window(
             prediction_path,
@@ -329,24 +316,25 @@ def compute_metrics(
             fig, ax = plt.subplots(figsize=(10, 10))
             ax.imshow(complete_mask.squeeze())
             ax.axis("off")  # Turn off the axis
-            fig.savefig(
-                os.path.join(
-                    save_dir,
-                    "prediction_figures",
-                    str(ix_row) + "_vegetation_mask.jpg",
-                ),
-                bbox_inches="tight",
-                pad_inches=0,
-            )
+            try:
+                fig.savefig(
+                    os.path.join(
+                        save_dir,
+                        "prediction_figures",
+                        str(ix_row) + "_vegetation_mask.jpg",
+                    ),
+                    bbox_inches="tight",
+                    pad_inches=0,
+                )
+            except:
+                print(f"Error saving vegetation mask figure : {complete_mask.shape=}")
             plt.close("all")
 
         bin_indices = np.digitize(labels, bins)  # Bin data by labels
 
         bin_indices_pred = np.digitize(predictions, bins)  # Bin data by labels
 
-        for i in range(
-            1, len(bins)
-        ):  # do not consider bins out of range (<0 or >200)
+        for i in range(1, len(bins)):  # do not consider bins out of range (<0 or >200)
             # Select data for the current bin
             # NB: keep only points in bin and with selected class
             bin_mask = bin_indices == i
@@ -366,9 +354,7 @@ def compute_metrics(
             pred_bin_predictions = predictions[pred_bin_mask]
 
             extend_hdf5_array(labels_save_path, bin_keys[i - 1], bin_labels)
-            extend_hdf5_array(
-                predictions_save_path, bin_keys[i - 1], bin_predictions
-            )
+            extend_hdf5_array(predictions_save_path, bin_keys[i - 1], bin_predictions)
 
             # TODO use hdf5 also for counts (although not really necessary, but easier to read)
             label_count_bin[i].append(len(bin_labels))
@@ -441,9 +427,7 @@ def compute_metrics(
         dataset = hdf_predictions[bin]
         y_pred = da.from_array(dataset, chunks="0.1 MiB")
         # Ensure that the arrays have the same shape
-        assert (
-            y_pred.shape == y_true.shape
-        ), "Shapes of y_pred and y_true must match"
+        assert y_pred.shape == y_true.shape, "Shapes of y_pred and y_true must match"
 
         res = compute_metrics_with_dask(y_pred, y_true)
         for key in res:
@@ -478,17 +462,14 @@ def compute_metrics(
     os.remove(predictions_save_path)
 
     metrics["label_count_bin"] = {
-        bin_keys[i - 1]: np.sum(label_count_bin[i])
-        for i in range(1, len(bins))
+        bin_keys[i - 1]: np.sum(label_count_bin[i]) for i in range(1, len(bins))
     }
     metrics["pred_count_bin"] = {
         bin_keys[i - 1]: np.sum(pred_count_bin[i]) for i in range(1, len(bins))
     }
 
     # Save to excel for easier manipulation
-    save_dict_of_dicts_to_excel(
-        metrics, os.path.join(save_dir, "metrics.xlsx")
-    )
+    save_dict_of_dicts_to_excel(metrics, os.path.join(save_dir, "metrics.xlsx"))
 
 
 if __name__ == "__main__":

@@ -6,15 +6,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import rasterio
 import rasterio.features
-import rootutils
-
-rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
-
-from omegaconf import DictConfig, OmegaConf
-from rasterio.plot import show
-from tqdm import tqdm
-
-from src.metrics.metrics_utils import (
+from metrics_utils import (
     compute_change_metrics,
     extract_tif_from_bounds,
     get_changes,
@@ -22,6 +14,9 @@ from src.metrics.metrics_utils import (
     mask_with_geometry,
     plot_detections,
 )
+from omegaconf import DictConfig, OmegaConf
+from rasterio.plot import show
+from tqdm import tqdm
 
 
 def create_fixed_size_bbox(geometry, width=300, height=300):

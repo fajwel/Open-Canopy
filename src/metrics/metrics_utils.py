@@ -529,10 +529,6 @@ def get_vegetation_and_forest_mask(
     )
     classification = classification.squeeze()
 
-    if np.any(classification.shape == 0):
-        print("Mask raster is empty")
-        return np.zeros_like(classification, dtype=bool)
-
     # Create a mask for pixels with value 5 in the classification raster
     classif_mask = classification == classes_to_keep[0]
     if len(classes_to_keep) > 1:
@@ -543,6 +539,10 @@ def get_vegetation_and_forest_mask(
     clipped_gdf = gpd.clip(forest_mask_gdf, raster_bounds)
 
     # Rasterize the clipped GeoDataFrame geometries
+    if min(classification.shape) == 0:
+        print(f"classification is empty {classification.shape=}")
+        return np.zeros_like(classif_mask, dtype=bool), profile
+
     geometries = [(geom, 1) for geom in clipped_gdf.geometry]
     if len(geometries):
         mask_geometries = rasterize(

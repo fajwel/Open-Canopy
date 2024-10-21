@@ -5,7 +5,7 @@ net:
   _target_: src.models.components.timmNet.timmNet
   backbone: "vit_small_r26_s32_224.augreg_in21k"
   pretrained: True
-  pretrained_path: datasets/init_models/hvit_small_r26_s32_224.augreg_in21k.bin
+  pretrained_path: datasets/Models/hvit_small_r26_s32_224.augreg_in21k.bin
   segmentation_head:
     _partial_: True
     _target_: src.models.components.utils.SimpleSegmentationHead

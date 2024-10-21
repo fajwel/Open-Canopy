@@ -68,7 +68,7 @@ def get_classification_raster(
         return most_frequent_value
 
     # Bin data into the grid
-    classif, x_edge, y_edge, _ = binned_statistic_2d(
+    classif, _, _, _ = binned_statistic_2d(
         las.x,
         las.y,
         las.classification,

@@ -81,7 +81,7 @@ Once you have the environment ready, see the [Usage](#usage) section to run scri
 
 ### Download models pretrained on ImageNet
 
-A script is provided (`scripts/download_pretrained.sh`) to download all the models finetuned in the benchmark.
+A [script](scripts/download_pretrained.sh) is provided to download all the models finetuned in the benchmark.
 
 ```bash
 # Supposing you are at the root or Open-Canopy
@@ -92,7 +92,7 @@ chmod +x scripts/download_pretrained.sh
 scripts/download_pretrained.sh
 ```
 
-Please refer to the official [github repository](https://github.com/facebookresearch/HighResCanopyHeight) to download *Tolan et al.*'s pretrained model, and copy it at the following location: `Open-Canopy/datasets/init_models/tolan_SSLlarge.pth`.
+Please refer to the official [github repository](https://github.com/facebookresearch/HighResCanopyHeight) to download *Tolan et al.*'s pretrained model, and copy it at the following location: `Open-Canopy/datasets/Models/tolan_SSLlarge.pth`.
 
 Note: Alternative size of models not used in the benchmark are commented out in the script. An associated config file is also given for all of them.
 
@@ -101,7 +101,7 @@ Note: Alternative size of models not used in the benchmark are commented out in 
 We recommend using [Hugging Face python API](https://huggingface.co/docs/huggingface_hub/guides/download) to download the [Open-Canopy dataset](https://huggingface.co/datasets/AI4Forest/Open-Canopy).
 
 The dataset must be located at the following location: `Open-Canopy/datasets` (unless you change paths in `configs`).
-A script `scripts/download_dataset.sh` is provided to do it seamlessly:
+A [script](scripts/download_dataset.py) is provided to do it seamlessly:
 
 ```bash
 # Supposing you are at the root or Open-Canopy
@@ -111,7 +111,7 @@ python scripts/download_dataset.py
 ## Usage
 
 This repository is built upon [PyTorch](https://pytorch.org/). Its structure was bootstrapped from [this code template](https://github.com/ashleve/lightning-hydra-template),
-which heavily relies on [Hydra](https://hydra.cc/) and [Pytorch-Lightning](https://github.com/PyTorchLightning/pytorch-lightning). Parameters for training can be accessed and modified through the config files in the `configs` folder or overridden in the command line.
+which heavily relies on [Hydra](https://hydra.cc/) and [Pytorch-Lightning](https://github.com/PyTorchLightning/pytorch-lightning). Parameters for training can be accessed and modified through the config files in the `configs` folder or overridden in the command line. Models and dataloaders models were implemented as in https://github.com/archaeoscape-ai/archaeoscape, thanks to [Yohann Perron](https://github.com/yohannperron) and [Vladyslav Sydorov](https://github.com/vsydorov).
 
 ### Data preprocessing
 
@@ -189,6 +189,8 @@ Please include a citation to the following article if you use the Open-Canopy da
 This paper is part of the project *AI4Forest*, which is funded by the French National Research Agency ([ANR](https://anr.fr/Projet-ANR-22-FAI1-0002)), the German Aerospace Center ([DLR](https://www.dlr.de/en)) and the German federal ministry for education and research ([BMBF](https://www.bmbf.de/bmbf/en/home/home_node.html)).
 
 The experiments conducted in this study were performed using HPC/AI resources provided by GENCI-IDRIS (Grant 2023-AD010114718 and 2023-AD011014781) and [Inria](https://inria.fr/fr).
+
+Models and dataloaders models were implemented as in https://github.com/archaeoscape-ai/archaeoscape, thanks to [Yohann Perron](https://github.com/yohannperron) and [Vladyslav Sydorov](https://github.com/vsydorov).
 
 ## Dataset license
 

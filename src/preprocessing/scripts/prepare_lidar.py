@@ -8,9 +8,9 @@ import hydra
 import laspy
 import numpy as np
 import rasterio
-import rootutils
 from omegaconf import DictConfig, OmegaConf
 from shapely.geometry import Polygon
+import rootutils
 
 rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
@@ -41,9 +41,7 @@ def main(cfg: DictConfig) -> None:
     else:
         data_version = cfg["data_version"]
 
-    save_dir = os.path.join(
-        os.path.expanduser(cfg["save_dir_path"]), data_version
-    )
+    save_dir = os.path.join(os.path.expanduser(cfg["save_dir_path"]), data_version)
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -56,9 +54,7 @@ def main(cfg: DictConfig) -> None:
 
     if os.path.exists(os.path.join(save_dir, "sampled_geometries.geojson")):
         print("Geometries already sampled, loading from file")
-        gdf = gpd.read_file(
-            os.path.join(save_dir, "sampled_geometries.geojson")
-        )
+        gdf = gpd.read_file(os.path.join(save_dir, "sampled_geometries.geojson"))
         if not cfg.overwrite:
             # Filter lidar geometries that have already been processed
             ix_processed = np.array(

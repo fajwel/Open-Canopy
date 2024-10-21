@@ -20,8 +20,7 @@ def get_aois_v3(path) -> gpd.GeoDataFrame:
     ppath = Path(path).parent
     if (ppath / "hillshades").exists():
         gf_aois["path_hs"] = {
-            x.with_suffix("").name: x
-            for x in (ppath / "hillshades").glob("*.tif")
+            x.with_suffix("").name: x for x in (ppath / "hillshades").glob("*.tif")
         }
         # assert not gf_aois['path_hs'].isna().any()
     if (ppath / "dtms").exists():
@@ -100,17 +99,14 @@ class Window_writer_rasterio:
         self.path = path
         self.profile = set_sparse_rasterio_profile(profile, dtype)
         if dtype == "float32" or dtype == "float16":
-            self.dst = rasterio.open(
-                str(path), "w+", **self.profile, compress="ZSTD", predictor=2
-            )
+            self.profile["compress"] = "ZSTD"
+            self.dst = rasterio.open(str(path), "w+", **self.profile, predictor=2)
         else:
             self.dst = rasterio.open(str(path), "w+", **self.profile)
         self.indexes = indexes
 
     def write(self, mdata, window):
-        dst_data = self.dst.read(
-            window=window, indexes=self.indexes, masked=True
-        )
+        dst_data = self.dst.read(window=window, indexes=self.indexes, masked=True)
         dst_data[~mdata.mask] = mdata[~mdata.mask]
         self.dst.write(dst_data, window=window, indexes=self.indexes)
 
@@ -123,9 +119,7 @@ class Window_writer_rasterio_via_numpy:
     def __init__(self, path, profile, dtype=None):
         self.path = path
         self.profile = set_sparse_rasterio_profile(profile, dtype)
-        dst_np = np.zeros(
-            [self.profile["height"], self.profile["width"]], np.float32
-        )
+        dst_np = np.zeros([self.profile["height"], self.profile["width"]], np.float32)
         self.dst_mnp = np.ma.array(data=dst_np, mask=np.ones_like(dst_np))
 
     def write(self, mdata, window):
@@ -248,9 +242,7 @@ def prepare_raster_targets(
         wwr = Window_writer_rasterio(raster_path, raster_profile, "uint8")
         gf_rasterfeats = gf_feats[gf_feats.intersects(poly_aoi)]
         safft_world_to_raster = (~raster_profile["transform"]).to_shapely()
-        gf_rasterfeats_t = gpd_affine_transform(
-            gf_rasterfeats, safft_world_to_raster
-        )
+        gf_rasterfeats_t = gpd_affine_transform(gf_rasterfeats, safft_world_to_raster)
         raster_shape = (raster_profile["height"], raster_profile["width"])
         data_raster = vecfeatures_to_ssegm_mask(
             gf_rasterfeats_t, label_names, raster_shape
@@ -263,9 +255,7 @@ def prepare_raster_targets(
             dtype=np.uint8,
         ).astype(bool)
         # Add good AOI mask here
-        wwr.dst.write(
-            np.ma.array(data=data_raster, mask=mask_raster), indexes=1
-        )
+        wwr.dst.write(np.ma.array(data=data_raster, mask=mask_raster), indexes=1)
         wwr.close()
 
         out_path = str(Path(raster_path).with_suffix(".jpg"))

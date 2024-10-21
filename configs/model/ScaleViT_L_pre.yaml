@@ -17,4 +17,4 @@ net:
 
   #Parameters for pretrained model
   pretrained: True
-  pretrained_path: datasets/init_models/scalemae-vitlarge-800.pth
+  pretrained_path: datasets/Models/scalemae-vitlarge-800.pth

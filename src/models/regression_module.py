@@ -2,12 +2,10 @@ from typing import Any, Dict, List, Tuple
 
 import hydra
 import numpy as np
-import pandas as pd
+import os
 import torch
 from lightning import LightningModule
-from torchmetrics import MaxMetric, MeanMetric
-from torchmetrics.classification import JaccardIndex
-from torchmetrics.classification.accuracy import Accuracy
+from torchmetrics import MeanMetric
 
 from src.metrics.compute_metrics import compute_metrics
 from src.models.components.utils import Masked_MAE, Masked_nMAE, Masked_RMSE
@@ -183,6 +181,7 @@ class RegressionModule(LightningModule):
             self.net = torch.compile(self.net, backend="inductor")
 
     def get_mask_from_targets(self, targets, mask_type):
+        # TODO make it consistent with the use of lidar_classification + forest mask
         if mask_type == "train":
             mask = torch.isinf(targets)
             if len(mask.shape) == 4:
@@ -243,19 +242,13 @@ class RegressionModule(LightningModule):
             h, w = data.shape[-2:]
             new_h, new_w = h - int(h * overlap), h - int(w * overlap)
             h_start, w_start = int(h * overlap) // 2, int(w * overlap) // 2
-            output = output[
-                ..., h_start : h_start + new_h, w_start : w_start + new_w
-            ]
-            targets = targets[
-                ..., h_start : h_start + new_h, w_start : w_start + new_w
-            ]
+            output = output[..., h_start : h_start + new_h, w_start : w_start + new_w]
+            targets = targets[..., h_start : h_start + new_h, w_start : w_start + new_w]
 
         # Set all not data to zero
         mask = self.get_mask_from_targets(targets, "train")
         pure_targets = targets[:, :1, :, :]
-        masked_targets = torch.where(
-            mask, torch.zeros_like(pure_targets), pure_targets
-        )
+        masked_targets = torch.where(mask, torch.zeros_like(pure_targets), pure_targets)
         masked_output = torch.where(mask, torch.zeros_like(output), output)
 
         loss = self.criterion(masked_output, masked_targets)
@@ -453,6 +446,22 @@ class RegressionModule(LightningModule):
             labels.
         :param batch_idx: The index of the current batch.
         """
+
+        self._inference_step(batch, batch_idx, dataloader_idx, "test")
+
+    def _inference_step(
+        self,
+        batch: Tuple[torch.Tensor, torch.Tensor],
+        batch_idx: int,
+        dataloader_idx: int = 0,
+        output_folder: str = "test",
+    ) -> None:
+        """Perform a single inference step on a batch of data
+
+        :param batch: A batch of data (a tuple) containing the input tensor of images and target
+            labels.
+        :param batch_idx: The index of the current batch.
+        """
         # Multi gpu
         rank_zero = self.trainer.global_rank == 0
         multi_gpu = self.trainer.world_size > 1
@@ -461,13 +470,14 @@ class RegressionModule(LightningModule):
         aoi_name = batch[2][0]["aoi_name"]
         gf_aoi = self.trainer.datamodule.gf_aois.loc[aoi_name]
         poly_aoi = gf_aoi["geometry"]
-        split = gf_aoi["split"]
         raster_targets = self.trainer.datamodule.raster_targets
 
         # create dir if needed
-        mkdir(self.output_dir + "/test")
+        mkdir(os.path.join(self.output_dir, output_folder))
 
-        raster_argmax_path = self.output_dir + f"/test/{aoi_name}.tif"
+        raster_argmax_path = os.path.join(
+            self.output_dir, output_folder, f"{aoi_name}.tif"
+        )
         if self.last_aoi_name != aoi_name:
             if self.last_aoi_name is not None:
                 self.wwr.close()
@@ -480,7 +490,7 @@ class RegressionModule(LightningModule):
             )
             self.last_aoi_name = aoi_name
 
-        loss, preds, targets, metas, preds_full = self.model_step(
+        _, _, _, metas, preds_full = self.model_step(
             batch, overlap=self.hparams.test_overlap
         )
         if multi_gpu:
@@ -493,6 +503,11 @@ class RegressionModule(LightningModule):
         else:
             preds_all = preds_full
             metas_all = metas
+
+        # round predictions to optimize compression
+        preds_all = torch.round(preds_all, decimals=1)
+        # clip negative values
+        preds_all = torch.clamp(preds_all, min=0.0, max=500.0)
 
         if rank_zero:
             write_to_rasterio(
@@ -514,66 +529,23 @@ class RegressionModule(LightningModule):
                 2022: self.output_dir + "/test/test_2022.tif",
                 2023: self.output_dir + "/test/test_2023.tif",
             },
+            predictions_unit="m",
             save_dir=self.output_dir + "/metrics",
         )
 
     def predict_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
+        self,
+        batch: Tuple[torch.Tensor, torch.Tensor],
+        batch_idx: int,
+        dataloader_idx: int = 0,
     ) -> None:
-        """Perform a single predict step on a batch of data from the test set.
+        """Perform a single predict step on a batch of data.
 
         :param batch: A batch of data (a tuple) containing the input tensor of images and target
             labels.
         :param batch_idx: The index of the current batch.
         """
-        # Multi gpu
-        rank_zero = self.trainer.global_rank == 0
-        multi_gpu = self.trainer.world_size > 1
-        # common per aoi
-        aoi_name = batch[2][0]["row_square"]["aoi_name"]
-        gf_aoi = self.trainer.datamodule.gf_aois.loc[aoi_name]
-        poly_aoi = gf_aoi["geometry"]
-        split = gf_aoi["split"]
-        raster_targets = self.trainer.datamodule.raster_targets
-
-        raster_argmax_path = (
-            self.output_dir + f"/preds/prediction_{aoi_name}_argmax.tif"
-        )
-        if self.last_aoi_name != aoi_name:
-            if self.last_aoi_name is not None:
-                self.wwr.close()
-            profile = raster_targets[aoi_name]["profile"]
-            profile["driver"] = "GTiff"
-            profile["BIGTIFF"] = "YES"
-            profile["count"] = 1
-            self.wwr = Window_writer_rasterio(
-                raster_argmax_path, profile, "float32", indexes=[1]
-            )
-            self.last_aoi_name = aoi_name
-
-        loss, preds, targets, metas, preds_full = self.model_step(
-            batch, overlap=self.hparams.test_overlap
-        )
-        preds_int = preds.argmax(axis=1)
-
-        if multi_gpu:
-            # Gather from all workers
-            preds_all = self.all_gather(preds)
-            metas_all = [_ for _ in range(self.trainer.world_size)]
-            torch.distributed.all_gather_object(metas_all, metas)
-            preds_all = preds_all.reshape(-1, *preds_all.shape[2:])
-            metas_all = [item for sublist in metas_all for item in sublist]
-        else:
-            preds_all = preds
-            metas_all = metas
-
-        if rank_zero:
-            write_to_rasterio(
-                self.wwr,
-                preds_all.detach().cpu().numpy(),
-                metas_all,
-                poly_aoi,
-            )
+        self._inference_step(batch, batch_idx, dataloader_idx, "predict")
 
     def configure_optimizers(self) -> Dict[str, Any]:
         """Choose what optimizers and learning-rate schedulers to use in your optimization.
@@ -584,9 +556,7 @@ class RegressionModule(LightningModule):
 
         :return: A dict containing the configured optimizers and learning-rate schedulers to be used for training.
         """
-        optimizer = self.hparams.optimizer(
-            params=self.trainer.model.parameters()
-        )
+        optimizer = self.hparams.optimizer(params=self.trainer.model.parameters())
         list_schedulers = []
         if self.hparams.scheduler is not None:
             assert (

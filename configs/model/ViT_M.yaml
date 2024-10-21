@@ -7,4 +7,4 @@ net:
   ViT_depth: 12
   ViT_num_heads: 8
   ViT_mlp_ratio: 4.0
-  pretrained_encoder_path: datasets/init_models/deit_3_medium_224_21k.pth #patchsize 16
+  pretrained_encoder_path: datasets/Models/deit_3_medium_224_21k.pth #patchsize 16

@@ -1,0 +1,10 @@
+defaults:
+  - _seg_default
+
+net:
+  _target_: src.models.components.depth_anything_v2.dpt.depth_anything_v2
+  backbone: "vits"  # Options: vits, vitb, vitl, vitg
+  pretrained: True
+  pretrained_path: datasets/Models/depth_anything_v2_vits.pth
+  img_size: ${data.imagesize}
+  lora_rank: 0  # Set to a positive value to enable LoRA

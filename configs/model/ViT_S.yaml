@@ -13,5 +13,5 @@ net:
   ViT_mlp_ratio: 4.0
   decoder_stride: ${model.net.ViT_patch_size}
   pretrained_encoder: True
-  pretrained_encoder_path: datasets/init_models/deit_3_small_224_21k.pth #patchsize 16
+  pretrained_encoder_path: datasets/Models/deit_3_small_224_21k.pth #patchsize 16
   pretrained_encoder_inter: True

@@ -10,7 +10,7 @@ from src.utils import RankedLogger
 log = RankedLogger(__name__, rank_zero_only=True)
 
 
-def infer_output(model, num_channels, img_size):
+def infer_output(model, num_channels, img_size, **kwargs):
     """Infer the output dimensions of the backbone model.
 
     Args:
@@ -31,7 +31,7 @@ def infer_output(model, num_channels, img_size):
         1, num_channels, img_size, img_size, dtype=torch.float32
     )
     with torch.no_grad():
-        dumy_features = model.forward_features(dumy_image)
+        dumy_features = model.forward_features(dumy_image, **kwargs)
 
     def analyse(img_size, dumy_features):
         remove_cls_token = False
