@@ -8,9 +8,9 @@ import hydra
 import laspy
 import numpy as np
 import rasterio
+import rootutils
 from omegaconf import DictConfig, OmegaConf
 from shapely.geometry import Polygon
-import rootutils
 
 rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
@@ -165,8 +165,7 @@ def main(cfg: DictConfig) -> None:
                     width,
                     method=cfg["lidar"]["method"],
                     quantile=cfg["lidar"]["quantile"],
-                    classes_to_filter=[1, 65, 66],
-                    dtm=dtm,
+                    classes_to_filter=[65, 66],
                 )
                 lidar_image = interpolate_missing_data(lidar_image)
                 lidar_image[lidar_image < 0] = 0

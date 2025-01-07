@@ -1,9 +1,9 @@
-# Open-Canopy: a Country-Scale Dataset for Canopy Height Estimation at Very High Resolution
+# Open-Canopy: Towards Very High Resolution Forest Monitoring
 
 ![Static Badge](https://img.shields.io/badge/Code%3A-lightgrey?color=lightgrey) [![license](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/IGNF/FLAIR-1-AI-Challenge/blob/master/LICENSE) <a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-ee4c2c?logo=pytorch&logoColor=white"></a>
 <a href="https://pytorchlightning.ai/"><img alt="Lightning" src="https://img.shields.io/badge/-Lightning-792ee5?logo=pytorchlightning&logoColor=white"></a>   ![Static Badge](https://img.shields.io/badge/Dataset%3A-lightgrey?color=lightgrey) [![license](https://img.shields.io/badge/License-IO%202.0-green.svg)](https://github.com/etalab/licence-ouverte/blob/master/open-licence.md)
 
-This is the official repository associated with the pre-print: "Open-Canopy: A Country-Scale Benchmark for Canopy Height Estimation at Very High Resolution".
+This is the official repository associated with the pre-print: "Open-Canopy: Towards Very High Resolution Forest Monitoring".
 
 This repository includes the code needed to reproduce all experiments in the paper.
 
@@ -116,6 +116,8 @@ which heavily relies on [Hydra](https://hydra.cc/) and [Pytorch-Lightning](https
 ### Data preprocessing
 
 See the [preprocessing README](src/preprocessing/README.md) for instructions on processing data from scratch, e.g., if you want to extend Open-Canopy to new areas.
+
+Note: in the first version of the dataset, non classified points were not taken into account in order to compute canopy height models (CHM) from LiDAR point clouds. The affected pixels can be masked using the provided lidar classification rasters (class 1). Starting January 2025, we also provide a second version of the CHMs where non classified points are included for computations (folder `lidar_v2`). This can lead to slighlty better metrics (gain about 0.05m on height MAE for the best model), although it affects less than 0.5% of pixels. However, use the first version of the CHMs to reproduce results of the paper. IGN is also starting to release pre-computed CHMs in some areas. When and where available, we recommend to use the CHMs released by IGN.
 
 ### Retrieve data
 
