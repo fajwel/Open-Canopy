@@ -108,49 +108,18 @@ def main(cfg: DictConfig) -> None:
 if __name__ == "__main__":
     # look at the args. If a path is given, then use it to extract the config and check point
     # print current working directory
-    if len(sys.argv) > 1:
-        training_dir = sys.argv[1]
-    else:
-        raise ValueError("Please provide a training result directory")
-    assert os.path.isdir(training_dir), "Please provide a valid training directory"
-    assert os.path.isfile(
-        os.path.join(training_dir, ".hydra", "config.yaml")
-    ), "No config.yaml found in training directory"
-    assert os.path.isfile(
-        os.path.join(training_dir, "checkpoints", "last.ckpt")
-    ), "No last.ckpt found in training directory"
-
-    # path to config.yaml
-    config_dir = os.path.join(
-        os.getcwd(), training_dir, ".hydra"
-    )  # hydra look for config relative to script
-
-    # path to checkpoint
     if len(sys.argv) > 2:
-        checkpoint_type = sys.argv[2]
+        checkpoint_path = sys.argv[1]
+        config_path = sys.argv[2]
     else:
-        checkpoint_type = "-best"
-    assert checkpoint_type in [
-        "-last",
-        "-best",
-    ], "Please provide a valid checkpoint type"
-    if checkpoint_type == "-last":
-        checkpoint_path = os.path.join(training_dir, "checkpoints", "last.ckpt")
-    else:
-        # look into /checkpoints/ for other file
-        files_list = os.listdir(os.path.join(training_dir, "checkpoints"))
-        files_list = [
-            file_name
-            for file_name in files_list
-            if file_name.startswith("epoch_") and file_name.endswith(".ckpt")
-        ]
-        if len(files_list) == 0:
-            raise ValueError("No best epoch checkpoint found in training directory")
-        elif len(files_list) > 1:
-            raise ValueError(
-                "Multiple best epoch checkpoints found in training directory"
-            )
-        checkpoint_path = os.path.join(training_dir, "checkpoints", files_list[0])
+        raise ValueError("Wrong number of arguments. Should be python eval.py <training_dir> <checkpoint_type> [other hydra args]")
+    assert os.path.isfile(
+        os.path.join(checkpoint_path)
+    ), "No checkpoint found at the given path"
+    assert checkpoint_path.endswith(".ckpt"), "Checkpoint file must use .ckpt extension"
+    assert os.path.isfile(config_path), "No config file found at the given path"
+    assert config_path.endswith(".yaml"), "Config file must use .yaml extension"
+
 
     # generate cmd line for calling hydra
     cmd = [
@@ -158,7 +127,7 @@ if __name__ == "__main__":
         "-cn",
         "config",
         "-cd",
-        config_dir,
+        os.path.dirname(config_path),
         "ckpt_path=" + checkpoint_path,
         "+trainer=gpu",
     ] + sys.argv[3:]
